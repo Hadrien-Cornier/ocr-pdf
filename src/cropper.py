@@ -5,14 +5,21 @@ import configparser
 import cv2
 import numpy as np
 
+# Get the absolute path to the script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Get the parent directory (project root)
+project_root = os.path.dirname(script_dir)
+# Construct the path to the config file
+config_path = os.path.join(project_root, 'config', 'config.ini')
+
 # Load configuration
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(config_path)
 
 # Define the directories
-input_directory = config.get('cropper', 'input_dir')
-output_directory = config.get('cropper', 'output_dir')
-debug_directory = config.get('cropper', 'debug_dir')
+input_directory = os.path.join(project_root, config.get('cropper', 'input_dir'))
+output_directory = os.path.join(project_root, config.get('cropper', 'output_dir'))
+debug_directory = os.path.join(project_root, config.get('cropper', 'debug_dir'))
 
 # Define the rectangle size
 rect_width = config.getint('cropper', 'rect_width')

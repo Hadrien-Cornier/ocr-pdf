@@ -1,38 +1,45 @@
-# Setup Instructions
 
-1. Create a virtual environment:
+## Setup Instructions
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/ocr-pdf.git
+   cd ocr-pdf
+   ```
+
+2. Create and activate a virtual environment:
    ```
    python -m venv .venv
+   source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
    ```
-
-2. Activate the virtual environment:
-   - On Windows:
-     ```
-     .venv\Scripts\activate
-     ```
-   - On macOS and Linux:
-     ```
-     source .venv/bin/activate
-     ```
 
 3. Install the requirements:
    ```
    pip install -r requirements.txt
    ```
 
-Make sure you have Python installed on your system before following these steps.
+## Usage
 
+1. Place your PDF files in the `data/input/` directory.
 
-4. Prepare and process your PDF:
-   a. Place your PDF files in the `in/` folder.
-   b. Run the cropper script:
-      ```
-      python cropper.py
-      ```
-   c. Run the vertical scan OCR script:
-      ```
-      python vertical_scan_ocr.py
-      ```
+2. Run the pipeline:
+   ```
+   python src/run_pipeline.py
+   ```
 
-This process will first crop your PDF into individual pages, then perform vertical scanning OCR on the resulting images.
+   This will execute the following steps:
+   - Crop the PDFs (output in `data/cropped/`)
+   - Align the images (output in `data/aligned/`)
+   - Perform OCR and grade extraction (output in `data/output/`)
 
+3. Check the results in the `data/output/` directory.
+
+4. Debug images for each step can be found in the respective subdirectories of `data/debug/`.
+
+## Configuration
+
+Adjust the settings in `config/config.ini` to customize the pipeline behavior.
+
+## Requirements
+
+See `requirements.txt` for the list of Python packages required.

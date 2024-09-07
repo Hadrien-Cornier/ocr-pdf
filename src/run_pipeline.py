@@ -2,14 +2,22 @@ import os
 import configparser
 import subprocess
 
+# Get the absolute path to the script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Get the parent directory (project root)
+project_root = os.path.dirname(script_dir)
+# Construct the path to the config file
+config_path = os.path.join(project_root, 'config', 'config.ini')
+
 # Load configuration
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(config_path)
 
 def run_step(script_name):
     print(f"Running {script_name}...")
     try:
-        result = subprocess.run(['python', script_name], check=True, text=True, capture_output=True)
+        script_path = os.path.join(script_dir, script_name)
+        result = subprocess.run(['python', script_path], check=True, text=True, capture_output=True)
         print(result.stdout)
         if result.stderr:
             print("Errors:")

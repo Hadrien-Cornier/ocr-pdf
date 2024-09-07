@@ -4,14 +4,20 @@ import os
 import json
 import configparser
 
+# Get the absolute path to the script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Get the parent directory (project root)
+project_root = os.path.dirname(script_dir)
+# Construct the path to the config file
+config_path = os.path.join(project_root, 'config', 'config.ini')
+
 # Load configuration
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(config_path)
 
 # Load the detected grade bands
-script_dir = os.path.dirname(os.path.abspath(__file__))
 json_dir = config.get('paths', 'json_dir')
-json_path = os.path.join(script_dir, json_dir, 'detected_grade_bands.json')
+json_path = os.path.join(project_root, json_dir, 'detected_grade_bands.json')
 
 try:
     with open(json_path, 'r') as f:
@@ -89,8 +95,8 @@ def draw_debug_image(image_path, bands, grades):
     return image
 
 # Define directories
-input_directory = os.path.join(script_dir, config.get('ocr', 'input_dir'))
-debug_directory = os.path.join(script_dir, config.get('ocr', 'debug_dir'))
+input_directory = os.path.join(project_root, config.get('ocr', 'input_dir'))
+debug_directory = os.path.join(project_root, config.get('ocr', 'debug_dir'))
 
 print(f"Input directory: {input_directory}")
 print(f"Debug directory: {debug_directory}")

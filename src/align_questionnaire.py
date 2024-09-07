@@ -4,9 +4,16 @@ import os
 import json
 import configparser
 
+# Get the absolute path to the script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Get the parent directory (project root)
+project_root = os.path.dirname(script_dir)
+# Construct the path to the config file
+config_path = os.path.join(project_root, 'config', 'config.ini')
+
 # Load configuration
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(config_path)
 
 def rotate_image(image, angle):
     height, width = image.shape[:2]
@@ -139,11 +146,10 @@ def align_questionnaire(input_path, output_path, debug_path, bands_dict):
 
 # Main execution
 if __name__ == "__main__":
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    input_directory = os.path.join(script_dir, config.get('aligner', 'input_dir'))
-    output_directory = os.path.join(script_dir, config.get('aligner', 'output_dir'))
-    debug_directory = os.path.join(script_dir, config.get('aligner', 'debug_dir'))
-    json_directory = os.path.join(script_dir, config.get('paths', 'json_dir'))
+    input_directory = os.path.join(project_root, config.get('aligner', 'input_dir'))
+    output_directory = os.path.join(project_root, config.get('aligner', 'output_dir'))
+    debug_directory = os.path.join(project_root, config.get('aligner', 'debug_dir'))
+    json_directory = os.path.join(project_root, config.get('paths', 'json_dir'))
 
     print(f"Input directory: {input_directory}")
     print(f"Output directory: {output_directory}")
@@ -167,10 +173,10 @@ if __name__ == "__main__":
             debug_path = os.path.join(debug_directory, f"debug_{filename}")
             align_questionnaire(input_path, output_path, debug_path, bands_dict)
 
-        # Save bands to JSON file
+        # Save bands to JSON file with proper formatting
         json_path = os.path.join(json_directory, 'detected_grade_bands.json')
         with open(json_path, 'w') as f:
-            json.dump(bands_dict, f)
+            json.dump(bands_dict, f, indent=4)
         print(f"Grade bands saved to: {json_path}")
 
         print(f"Alignment completed. {len(png_files)} images processed.")
