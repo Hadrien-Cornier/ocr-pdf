@@ -1,1 +1,14 @@
 .venv
+in/*
+out/*
+out/2/*
+debug/*
+!in/.gitkeep
+!out/.gitkeep
+!out/2/.gitkeep
+
+__pycache__/
+*.py[cod]
+
+.DS_Store
+Thumbs.db
