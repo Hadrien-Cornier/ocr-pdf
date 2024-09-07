@@ -1,17 +1,26 @@
 from PIL import Image
 import os
 from pdf2image import convert_from_path
+import configparser
+import cv2
+import numpy as np
+
+# Load configuration
+config = configparser.ConfigParser()
+config.read('config.ini')
 
 # Define the directories
-input_directory = './in'
-output_directory = './out'
+input_directory = config.get('cropper', 'input_dir')
+output_directory = config.get('cropper', 'output_dir')
+debug_directory = config.get('cropper', 'debug_dir')
 
-# Define the rectangle size (adjust as needed)
-rect_width = 600
-rect_height = 800
+# Define the rectangle size
+rect_width = config.getint('cropper', 'rect_width')
+rect_height = config.getint('cropper', 'rect_height')
 
-# Ensure the output directory exists
+# Ensure the output and debug directories exist
 os.makedirs(output_directory, exist_ok=True)
+os.makedirs(debug_directory, exist_ok=True)
 
 def convert_pdf_to_png(pdf_path, output_directory):
     pages = convert_from_path(pdf_path)
@@ -22,7 +31,7 @@ def convert_pdf_to_png(pdf_path, output_directory):
         png_paths.append(png_path)
     return png_paths
 
-def crop_image(input_path, output_path, rect_width, rect_height):
+def crop_image(input_path, output_path, debug_path, rect_width, rect_height):
     with Image.open(input_path) as img:
         width, height = img.size
         
@@ -40,6 +49,11 @@ def crop_image(input_path, output_path, rect_width, rect_height):
         
         # Save the cropped image
         cropped_img.save(output_path)
+
+        # Create debug image
+        debug_img = cv2.imread(input_path)
+        cv2.rectangle(debug_img, (left, top), (right, bottom), (0, 255, 0), 2)
+        cv2.imwrite(debug_path, debug_img)
 
 # Get all PDF files in the input directory
 pdf_files = [f for f in os.listdir(input_directory) if f.endswith('.pdf')]
@@ -59,9 +73,11 @@ for i, filename in enumerate(pdf_files, start=1):
     for j, png_path in enumerate(png_paths, start=1):
         output_filename = f'questionnaire_{i}_page_{j}.png'
         output_path = os.path.join(output_directory, output_filename)
+        debug_filename = f'debug_questionnaire_{i}_page_{j}.png'
+        debug_path = os.path.join(debug_directory, debug_filename)
         
         # Crop the image
-        crop_image(png_path, output_path, rect_width, rect_height)
+        crop_image(png_path, output_path, debug_path, rect_width, rect_height)
         
         # Remove the temporary full-page PNG
         os.remove(png_path)
