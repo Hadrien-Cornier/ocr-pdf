@@ -1,16 +1,38 @@
+# OCR PDF Survey Response Extractor
+
+This project is designed to extract manual survey responses from scanned PDF documents. It uses image processing techniques to identify and grade multiple-choice answers from questionnaires.
+
+## Overview
+
+The system processes scanned PDF surveys through the following steps:
+1. PDF to image conversion
+2. Image cropping and alignment
+3. Detection of answer grids
+4. Response extraction
+5. Grading and result compilation
+
+This automated approach allows for efficient processing of large volumes of paper-based surveys, converting them into digital data for analysis.
 
 ## Setup Instructions
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/ocr-pdf.git
+   git clone https://github.com/Hadrien-Cornier/ocr-pdf.git
    cd ocr-pdf
    ```
 
 2. Create and activate a virtual environment:
+
+   For macOS and Linux:
    ```
    python -m venv .venv
-   source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
+   source .venv/bin/activate
+   ```
+
+   For Windows:
+   ```
+   python -m venv .venv
+   .venv\Scripts\activate
    ```
 
 3. Install the requirements:

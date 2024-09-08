@@ -22,23 +22,41 @@ def rotate_image(image, angle):
     rotated = cv2.warpAffine(image, rotation_matrix, (width, height), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
     return rotated
 
-def find_best_rotation(image, angle_range=20, step=0.5):
+def find_best_rotation(image, angle_range=20, angle_step=0.1):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    height, width = gray.shape
-    kernel_height = height // 20
-    kernel = np.ones((kernel_height, width)) / width
-    kernel[kernel_height//2:] = -kernel[kernel_height//2:]
-
-    max_response = float('-inf')
-    best_angle = 0
-
-    for angle in np.arange(-angle_range, angle_range + step, step):
-        rotated = rotate_image(gray, angle)
-        response = np.abs(cv2.filter2D(rotated, -1, kernel)).max()
-        if response > max_response:
-            max_response = response
-            best_angle = angle
-
+    
+    # Apply Gaussian blur to reduce noise
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    
+    # Use a lower threshold for edge detection to catch more potential lines
+    edges = cv2.Canny(blurred, 30, 100, apertureSize=3)
+    
+    # Dilate the edges to connect nearby edge pixels
+    kernel = np.ones((3,3), np.uint8)
+    dilated_edges = cv2.dilate(edges, kernel, iterations=1)
+    
+    # Adjust HoughLines parameters
+    lines = cv2.HoughLines(dilated_edges, 1, np.pi/180, 100)
+    
+    if lines is None:
+        print("No lines detected. Returning 0 degrees rotation.")
+        return 0
+    
+    angles = []
+    for line in lines:
+        rho, theta = line[0]
+        # Convert theta to degrees and adjust to be between -90 and 90
+        angle = np.degrees(theta) - 90
+        if -angle_range <= angle <= angle_range:
+            angles.append(angle)
+    
+    # Calculate the median angle if we have detected lines
+    if angles:
+        best_angle = np.median(angles)
+    else:
+        print("No valid angles found within the specified range. Returning 0 degrees rotation.")
+        best_angle = 0
+    
     return best_angle
 
 def find_content_margins(image, threshold=30):
