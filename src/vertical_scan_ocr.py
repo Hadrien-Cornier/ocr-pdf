@@ -24,6 +24,9 @@ debug_dir = config.get('ocr', 'debug_dir')
 cell_width = config.getint('ocr', 'cell_width')
 cell_height = config.getint('ocr', 'cell_height')
 ink_threshold = config.getint('ocr', 'ink_threshold')
+overlap_threshold = config.getfloat('ocr', 'overlap_threshold')
+number_of_questions = config.getint('ocr', 'number_of_questions')
+number_of_grades = config.getint('ocr', 'number_of_grades')
 
 # Load the detected grade bands
 json_dir = config.get('paths', 'json_dir')
@@ -63,10 +66,10 @@ def detect_ink_cells(image_path):
             if avg_value < ink_threshold:
                 ink_cells.append((x, y, cell_width, cell_height, 255 - avg_value))
 
-    nms_cells = non_max_suppression(ink_cells)
+    nms_cells = non_max_suppression(ink_cells, overlap_threshold, max_detections=number_of_questions)
     return nms_cells, image, width
 
-def non_max_suppression(cells, overlap_threshold=0.3):
+def non_max_suppression(cells, overlap_threshold=0.3, max_detections=None):
     if len(cells) == 0:
         return []
 
@@ -83,6 +86,10 @@ def non_max_suppression(cells, overlap_threshold=0.3):
     while order.size > 0:
         i = order[0]
         keep.append(i)
+        
+        if max_detections is not None and len(keep) >= max_detections:
+            break
+
         xx1 = np.maximum(x1[i], x1[order[1:]])
         yy1 = np.maximum(y1[i], y1[order[1:]])
         xx2 = np.minimum(x2[i], x2[order[1:]])
