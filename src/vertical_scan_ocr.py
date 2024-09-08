@@ -47,7 +47,16 @@ def detect_ink_cells(image_path):
     height, width = gray.shape
     ink_cells = []
 
-    for y in range(0, height - cell_height, cell_height // 2):
+    # Get the horizontal bands for this image
+    filename = os.path.basename(image_path)
+    image_bands = DETECTED_BANDS.get(filename, {})
+    horizontal_bands = image_bands.get('horizontal', [])
+
+    if not horizontal_bands:
+        print(f"Warning: No horizontal bands found for {filename}")
+        return None, None
+
+    for y in horizontal_bands:
         for x in range(0, width - cell_width, cell_width // 2):
             cell = gray[y:y+cell_height, x:x+cell_width]
             avg_value = np.mean(cell)
