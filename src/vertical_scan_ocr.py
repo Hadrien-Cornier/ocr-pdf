@@ -20,6 +20,11 @@ input_dir = config.get('ocr', 'input_dir')
 output_dir = config.get('ocr', 'output_dir')
 debug_dir = config.get('ocr', 'debug_dir')
 
+# Get OCR parameters from config
+cell_width = config.getint('ocr', 'cell_width')
+cell_height = config.getint('ocr', 'cell_height')
+ink_threshold = config.getint('ocr', 'ink_threshold')
+
 # Load the detected grade bands
 json_dir = config.get('paths', 'json_dir')
 json_path = os.path.join(project_root, json_dir, 'detected_grade_bands.json')
@@ -32,7 +37,7 @@ except FileNotFoundError:
     print("Make sure the aligner step has been run and produced the JSON file.")
     exit(1)
 
-def detect_ink_cells(image_path, cell_width=20, cell_height=20, threshold=200):
+def detect_ink_cells(image_path):
     image = cv2.imread(image_path)
     if image is None:
         print(f"Error: Failed to load image: {image_path}")
@@ -46,7 +51,7 @@ def detect_ink_cells(image_path, cell_width=20, cell_height=20, threshold=200):
         for x in range(0, width - cell_width, cell_width // 2):
             cell = gray[y:y+cell_height, x:x+cell_width]
             avg_value = np.mean(cell)
-            if avg_value < threshold:
+            if avg_value < ink_threshold:
                 ink_cells.append((x, y, cell_width, cell_height, 255 - avg_value))
 
     nms_cells = non_max_suppression(ink_cells)

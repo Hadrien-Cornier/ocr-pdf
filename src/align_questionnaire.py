@@ -82,7 +82,7 @@ def find_content_margins(image, threshold=30):
         if left_margin != 0 and right_margin != width - 1:
             break
     
-    return left_margin, right_margin
+    return left_margin-10, right_margin+10
 
 def detect_horizontal_bands(image, left_margin, right_margin):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
