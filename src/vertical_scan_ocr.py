@@ -15,6 +15,11 @@ config_path = os.path.join(project_root, 'config', 'config.ini')
 config = configparser.ConfigParser()
 config.read(config_path)
 
+# Get directories from config
+input_dir = config.get('ocr', 'input_dir')
+output_dir = config.get('ocr', 'output_dir')
+debug_dir = config.get('ocr', 'debug_dir')
+
 # Load the detected grade bands
 json_dir = config.get('paths', 'json_dir')
 json_path = os.path.join(project_root, json_dir, 'detected_grade_bands.json')
@@ -26,14 +31,6 @@ except FileNotFoundError:
     print(f"Error: Could not find {json_path}")
     print("Make sure the aligner step has been run and produced the JSON file.")
     exit(1)
-
-# # Define grade bands
-# GRADE_BANDS = [
-#     (10, 26, 1),
-#     (26, 39, 2),
-#     (39, 50, 3),
-#     (50, 60, 4),
-# ]
 
 def detect_ink_cells(image_path, cell_width=20, cell_height=20, threshold=200):
     image = cv2.imread(image_path)
@@ -95,14 +92,25 @@ def filter_horizontal_cells(ink_cells, vertical_threshold=5):
             filtered_cells.append(cell)
     return filtered_cells
 
-def calculate_grades(ink_cells, image_width):
+def calculate_grades(ink_cells, image_width, vertical_bands):
     grades = []
     for cell in ink_cells:
         x, y, w, h, _ = cell
         centroid_x = x + w / 2
         centroid_y = y + h / 2
-        grade_percentage = (centroid_x / image_width) * 100
-        grade = next((g for low, high, g in GRADE_BANDS if low <= grade_percentage < high), None)
+        
+        # Use detected bands to determine the grade
+        for i in range(len(vertical_bands) - 1):
+            low = vertical_bands[i]
+            high = vertical_bands[i+1]
+            if low <= centroid_x < high:
+                grade = i + 1
+                grade_percentage = ((centroid_x - low) / (high - low)) * 100
+                break
+        else:
+            grade = None
+            grade_percentage = None
+
         grades.append((centroid_y, grade_percentage, grade))
 
     # Sort grades by y-coordinate (top to bottom)
@@ -110,60 +118,71 @@ def calculate_grades(ink_cells, image_width):
 
     return grades
 
-def draw_ink_cells_and_bands(image, ink_cells, grades):
+def draw_ink_cells_and_bands(image, ink_cells, grades, vertical_bands):
     height, width, _ = image.shape
 
     # Draw grade bands
-    for low, high, grade in GRADE_BANDS:
-        x1 = int(low * width / 100)
-        x2 = int(high * width / 100)
-        cv2.line(image, (x1, 0), (x1, height), (200, 200, 200), 1)
-        cv2.putText(image, str(grade), (x1 + 5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 2)
+    for i, x in enumerate(vertical_bands):
+        cv2.line(image, (x, 0), (x, height), (200, 200, 200), 1)
+        if i < len(vertical_bands) - 1:
+            cv2.putText(image, str(i+1), (x + 5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 2)
 
     # Draw cells and grades
     for cell, (_, percentage, grade) in zip(ink_cells, grades):
         x, y, w, h, _ = map(int, cell)
         cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.putText(image, f"{percentage:.1f}% (Grade: {grade})", (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+        if percentage is not None and grade is not None:
+            cv2.putText(image, f"{percentage:.1f}% (Grade: {grade})", (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     return image
 
-# Define directories
-script_dir = os.path.dirname(os.path.abspath(__file__))
-input_directory = os.path.join(script_dir, 'out')
-debug_directory = os.path.join(script_dir, 'debug')
+# Main execution
+if __name__ == "__main__":
+    # Define directories using config
+    input_directory = os.path.join(project_root, input_dir)
+    debug_directory = os.path.join(project_root, debug_dir)
 
-print(f"Input directory: {input_directory}")
-print(f"Debug directory: {debug_directory}")
+    print(f"Input directory: {input_directory}")
+    print(f"Debug directory: {debug_directory}")
 
-# Ensure debug directory exists
-os.makedirs(debug_directory, exist_ok=True)
+    # Ensure debug directory exists
+    os.makedirs(debug_directory, exist_ok=True)
 
-# Get all PNG files in the input directory
-png_files = [f for f in os.listdir(input_directory) if f.endswith('.png')]
-png_files.sort()
+    # Get all PNG files in the input directory
+    png_files = [f for f in os.listdir(input_directory) if f.endswith('.png')]
+    png_files.sort()
 
-if png_files:
-    for filename in png_files:
-        image_path = os.path.join(input_directory, filename)
-        ink_cells, original_image, image_width = detect_ink_cells(image_path)
+    if png_files:
+        for filename in png_files:
+            image_path = os.path.join(input_directory, filename)
+            ink_cells, original_image, image_width = detect_ink_cells(image_path)
 
-        if ink_cells is not None and original_image is not None:
-            ink_cells = filter_horizontal_cells(ink_cells)
-            grades = calculate_grades(ink_cells, image_width)
+            if ink_cells is not None and original_image is not None:
+                # Get the detected bands for this specific image
+                image_bands = DETECTED_BANDS.get(filename, {})
+                vertical_bands = image_bands.get('vertical', [])
+                if not vertical_bands:
+                    print(f"Warning: No vertical bands found for {filename}")
+                    continue
 
-            print(f"Grades for {filename}:")
-            for i, (_, percentage, grade) in enumerate(grades, 1):
-                print(f"  Question {i}: {percentage:.1f}% (Grade: {grade})")
+                ink_cells = filter_horizontal_cells(ink_cells)
+                grades = calculate_grades(ink_cells, image_width, vertical_bands)
 
-            # Draw ink cells, grades, and bands on the image
-            debug_image = draw_ink_cells_and_bands(original_image.copy(), ink_cells, grades)
+                print(f"Grades for {filename}:")
+                for i, (_, percentage, grade) in enumerate(grades, 1):
+                    if percentage is not None and grade is not None:
+                        print(f"  Question {i}: {percentage:.1f}% (Grade: {grade})")
+                    else:
+                        print(f"  Question {i}: Unable to determine grade")
 
-            # Save the debug image
-            debug_image_path = os.path.join(debug_directory, f"debug_{filename}")
-            cv2.imwrite(debug_image_path, debug_image)
-            print(f"Debug image saved: {debug_image_path}")
+                # Draw ink cells, grades, and bands on the image
+                debug_image = draw_ink_cells_and_bands(original_image.copy(), ink_cells, grades, vertical_bands)
 
-    print(f"Grade extraction completed. {len(png_files)} images processed.")
-else:
-    print("No PNG files found in the input directory.")
+                # Save the debug image
+                debug_image_path = os.path.join(debug_directory, f"debug_{filename}")
+                cv2.imwrite(debug_image_path, debug_image)
+                print(f"Debug image saved: {debug_image_path}")
+
+        print(f"Grade extraction completed. {len(png_files)} images processed.")
+    else:
+        print("No PNG files found in the input directory.")
