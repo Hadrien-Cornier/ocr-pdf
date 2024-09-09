@@ -135,7 +135,7 @@ def align_questionnaire(input_path, output_path, debug_path, bands_dict):
     rotated = rotate_image(image, best_angle)
     left_margin, right_margin = find_content_margins(rotated)
     
-    num_grades = config.getint('aligner', 'num_grades')
+    num_grades = config.getint('questions', 'number_of_grades')
     vertical_bands = create_grade_bands(left_margin, right_margin, num_grades)
     horizontal_bands = detect_horizontal_bands(rotated, left_margin, right_margin)
     
