@@ -1,0 +1,20 @@
+{
+    "CONDITIONS DE MISE EN ŒUVRE": [ 
+        "Avez-vous été informé des objectifs et du programme avant la formation ?",
+        "Durée de la formation adaptée",
+        "Conditions d'organisation",
+        "Composition du groupe adéquat",
+        "Si classe virtuelle, qualité de la connexion"
+    ],
+    "PÉDAGOGIE ET ANIMATION": [
+        "Objectifs de la formation clairement formulés",
+        "Qualité des supports utilisés (documents, vidéos,...)",
+        "Interactivité et qualité des échanges avec le(s) intervenant(s) et au sein du groupe",
+        "Efficacité de l'animation (qualité pédagogique et maîtrise du sujet)"
+    ],
+    "SATISFACTION": [
+        "La formation a répondu à vos attentes",
+        "Modalités pédagogiques adaptées ou non (présentiel ou distanciel)",
+        "Motivation pour poursuivre /approfondir /mettre en œuvre les acquis"
+    ]
+}

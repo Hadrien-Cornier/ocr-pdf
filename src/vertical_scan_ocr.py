@@ -25,8 +25,11 @@ cell_width = config.getint('ocr', 'cell_width')
 cell_height = config.getint('ocr', 'cell_height')
 ink_threshold = config.getint('ocr', 'ink_threshold')
 overlap_threshold = config.getfloat('ocr', 'overlap_threshold')
-number_of_questions = config.getint('ocr', 'number_of_questions')
-number_of_grades = config.getint('ocr', 'number_of_grades')
+questions_file = config.get('questions', 'file')
+questions_path = os.path.join(project_root, "config", questions_file)
+questions = json.load(open(questions_path))
+number_of_questions = sum(len(section) for section in questions.values())
+number_of_grades = config.getint('questions', 'number_of_grades')
 
 # Load the detected grade bands
 json_dir = config.get('paths', 'json_dir')
